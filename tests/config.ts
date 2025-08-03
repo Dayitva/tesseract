@@ -10,20 +10,17 @@ const bool = z
 const ConfigSchema = z.object({
     SRC_CHAIN_RPC: z.string().url(),
     DST_CHAIN_RPC: z.string().url(),
-    SRC_CHAIN_CREATE_FORK: bool.default('false'), // Changed to false for real testnets
-    DST_CHAIN_CREATE_FORK: bool.default('false'), // Changed to false for real testnets
+    SRC_CHAIN_CREATE_FORK: bool.default('false'),
+    DST_CHAIN_CREATE_FORK: bool.default('false'),
     TEZOS_RPC_URL: z.string().url().optional(),
     TEZOS_CONTRACT_ADDRESS: z.string().optional(),
-    // Add testnet-specific environment variables
     USE_TESTNETS: bool.default('true'),
     SEPOLIA_RPC: z.string().url().optional(),
-    BSC_TESTNET_RPC: z.string().url().optional(),
     TEZOS_GHOSTNET_RPC: z.string().url().optional()
 })
 
 const fromEnv = ConfigSchema.parse(process.env)
 
-// Testnet configurations
 const testnetConfig = {
     sepolia: {
         chainId: Sdk.NetworkEnum.ETHEREUM, // Use mainnet enum but testnet URL
@@ -35,20 +32,6 @@ const testnetConfig = {
         tokens: {
             USDC: {
                 address: '0x1c7d4b196cb0c7b01d743fbc6116a902379c7238', // Sepolia USDC
-                donor: '0x70997970C51812dc3A010C7d01b50e0d17dc79C8'
-            }
-        }
-    },
-    bscTestnet: {
-        chainId: Sdk.NetworkEnum.BINANCE, // Use mainnet enum but testnet URL
-        url: fromEnv.BSC_TESTNET_RPC || 'https://data-seed-prebsc-1-s1.binance.org:8545',
-        createFork: false,
-        limitOrderProtocol: '0x111111125421ca6dc452d289314280a0f8842a65', // BSC Testnet LOP address
-        wrappedNative: '0xae13d989dac2f0debff460ac112a837c89baa7cd', // BSC Testnet WBNB
-        ownerPrivateKey: process.env.BSC_TESTNET_PRIVATE_KEY || '0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80',
-        tokens: {
-            USDC: {
-                address: '0x64544969ed7ebf5f083679233325356ebe738930', // BSC Testnet USDC
                 donor: '0x70997970C51812dc3A010C7d01b50e0d17dc79C8'
             }
         }
@@ -88,17 +71,19 @@ export const config = {
                 }
             }
         },
-        destination: fromEnv.USE_TESTNETS ? testnetConfig.bscTestnet : {
-            chainId: Sdk.NetworkEnum.BINANCE,
-            url: fromEnv.DST_CHAIN_RPC,
-            createFork: fromEnv.DST_CHAIN_CREATE_FORK,
-            limitOrderProtocol: '0x111111125421ca6dc452d289314280a0f8842a65',
-            wrappedNative: '0xbb4cdb9cbd36b01bd1cbaebf2de08d9173bc095c',
-            ownerPrivateKey: '0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80',
+        destination: fromEnv.USE_TESTNETS ? testnetConfig.tezosGhostnet : {
+            chainId: 'TEZOS::1',
+            url: fromEnv.TEZOS_RPC_URL || 'https://ghostnet.tezos.marigold.dev',
+            contractAddress: fromEnv.TEZOS_CONTRACT_ADDRESS || 'KT1TestContractAddress',
+            ownerPrivateKey: process.env.TEZOS_PRIVATE_KEY || '0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80',
             tokens: {
+                XTZ: {
+                    address: '0x0000000000000000000000000000000000000000',
+                    donor: 'tz1TestDonorAddress'
+                },
                 USDC: {
-                    address: '0x8965349fb649a33a30cbfda057d8ec2c48abe2a2',
-                    donor: '0x4188663a85C92EEa35b5AD3AA5cA7CeB237C6fe9'
+                    address: 'KT1TestUSDCAddress',
+                    donor: 'tz1TestUSDCDonor'
                 }
             }
         },
@@ -106,10 +91,10 @@ export const config = {
             chainId: 'TEZOS::1',
             url: fromEnv.TEZOS_RPC_URL || 'https://ghostnet.tezos.marigold.dev',
             contractAddress: fromEnv.TEZOS_CONTRACT_ADDRESS || 'KT1TestContractAddress',
-            ownerPrivateKey: '0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80',
+            ownerPrivateKey: process.env.TEZOS_PRIVATE_KEY || '0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80',
             tokens: {
                 XTZ: {
-                    address: '0x0000000000000000000000000000000000000000', // Native XTZ
+                    address: '0x0000000000000000000000000000000000000000',
                     donor: 'tz1TestDonorAddress'
                 },
                 USDC: {
@@ -119,6 +104,6 @@ export const config = {
             }
         }
     }
-} as const
+}
 
 export type ChainConfig = (typeof config.chain)['source' | 'destination' | 'tezos']

@@ -75,12 +75,12 @@ describe('Tezos to EVM Cross-Chain Atomic Swap', () => {
         // Initialize wallets
         dstChainUser = new Wallet(userPk, dst.provider)
         dstChainResolver = new Wallet(resolverPk, dst.provider)
-        
+
         tezosUser = createTezosWalletFromEthKey(userPk)
         tezosResolver = createTezosWalletFromEthKey(resolverPk)
 
         dstFactory = new EscrowFactory(dst.provider, dst.escrowFactory)
-        
+
         // Fund user with USDC on destination chain (EVM)
         await dstChainUser.topUpFromDonor(
             config.chain.source.tokens.USDC.address,
@@ -102,7 +102,7 @@ describe('Tezos to EVM Cross-Chain Atomic Swap', () => {
     })
 
     async function getBalances(): Promise<{
-        tezos: {user: string; resolver: string}; 
+        tezos: {user: string; resolver: string}
         dst: {user: bigint; resolver: bigint}
     }> {
         return {
@@ -142,7 +142,7 @@ describe('Tezos to EVM Cross-Chain Atomic Swap', () => {
                     makingAmount: parseUnits('1', 6), // 1 USDC
                     takingAmount: parseUnits('1', 6), // 1 USDC equivalent in XTZ
                     makerAsset: new Address(config.chain.source.tokens.USDC.address),
-                    takerAsset: new Address("0x0000000000000000000000000000000000000000") // Native XTZ
+                    takerAsset: new Address('0x0000000000000000000000000000000000000000') // Native XTZ
                 },
                 {
                     hashLock: Sdk.HashLock.forSingleFill(secret),
@@ -200,12 +200,9 @@ describe('Tezos to EVM Cross-Chain Atomic Swap', () => {
 
             // Resolver fills the order and deploys destination escrow
             const resolver = new Resolver(dst.provider, dst.resolver)
-            
+
             // Deploy destination escrow on EVM
-            await resolver.deployDst(
-                order.getDstImmutables(),
-                Number(srcImmutables.timeLocks.srcCancellation)
-            )
+            await resolver.deployDst(order.getDstImmutables(), Number(srcImmutables.timeLocks.srcCancellation))
 
             console.log('Destination escrow deployed')
 
@@ -222,11 +219,7 @@ describe('Tezos to EVM Cross-Chain Atomic Swap', () => {
 
             // Withdraw from EVM escrow
             const dstEscrowAddress = await dstFactory.addressOfEscrowDst(order.getDstImmutables())
-            await resolver.withdraw(
-                {address: dstEscrowAddress} as any,
-                secret,
-                order.getDstImmutables()
-            )
+            await resolver.withdraw({address: dstEscrowAddress} as any, secret, order.getDstImmutables())
 
             console.log('EVM withdrawal completed')
 
@@ -252,21 +245,28 @@ async function initChain(
     cnf: ChainConfig
 ): Promise<{node?: CreateServerReturnType; provider: JsonRpcProvider; escrowFactory: string; resolver: string}> {
     const {node, provider} = await getProvider(cnf)
-    
+
     const deployer = new SignerWallet(cnf.ownerPrivateKey, provider)
-    
+
     const factory = await deploy(factoryContract, [], provider, deployer)
-    const resolver = await deploy(resolverContract, [factory, '0x111111125421ca6dc452d289314280a0f8842a65', deployer.address], provider, deployer)
-    
+    const resolver = await deploy(
+        resolverContract,
+        [factory, '0x111111125421ca6dc452d289314280a0f8842a65', deployer.address],
+        provider,
+        deployer
+    )
+
     return {node, provider, escrowFactory: factory, resolver}
 }
 
 async function getProvider(cnf: ChainConfig): Promise<{node?: CreateServerReturnType; provider: JsonRpcProvider}> {
     if (cnf.createFork) {
-        const node = await createServer(anvil({
-            forkUrl: cnf.url,
-            forkBlockNumber: 20000000n
-        }))
+        const node = await createServer(
+            anvil({
+                forkUrl: cnf.url,
+                forkBlockNumber: 20000000n
+            })
+        )
         return {node, provider: new JsonRpcProvider(node.url)}
     } else {
         return {provider: new JsonRpcProvider(cnf.url)}
@@ -283,4 +283,4 @@ async function deploy(
     const contract = await factory.deploy(...params)
     await contract.waitForDeployment()
     return await contract.getAddress()
-} 
+}

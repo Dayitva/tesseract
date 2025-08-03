@@ -17,6 +17,9 @@
     "demo:full": "node scripts/demo.js full",
     "verify": "node scripts/verify-requirements.js",
     "setup:testnet": "node scripts/setup-testnets.js",
+    "deploy:testnet": "node scripts/deploy-testnet.js",
+    "deploy:tezos": "node scripts/deploy-tezos.js",
+    "install:ligo": "./scripts/install-ligo.sh",
     "lint": "eslint  \"tests/**/*.ts\""
   },
   "devDependencies": {

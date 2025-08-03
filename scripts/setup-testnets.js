@@ -11,7 +11,7 @@ const path = require('path');
 console.log('🚀 Setting up Testnet Configuration');
 console.log('=====================================\n');
 
-// Testnet RPC URLs
+// Only keep Sepolia and Tezos Ghostnet in testnetConfigs
 const testnetConfigs = {
     sepolia: {
         name: 'Sepolia (Ethereum Testnet)',
@@ -19,13 +19,6 @@ const testnetConfigs = {
         faucet: 'https://sepoliafaucet.com/',
         explorer: 'https://sepolia.etherscan.io/',
         chainId: 11155111
-    },
-    bscTestnet: {
-        name: 'BSC Testnet',
-        rpc: 'https://data-seed-prebsc-1-s1.binance.org:8545',
-        faucet: 'https://testnet.binance.org/faucet-smart',
-        explorer: 'https://testnet.bscscan.com/',
-        chainId: 97
     },
     tezosGhostnet: {
         name: 'Tezos Ghostnet',
@@ -52,10 +45,6 @@ const envExample = `# Testnet Configuration
 # Sepolia (Ethereum Testnet)
 SEPOLIA_RPC=https://eth-sepolia.g.alchemy.com/v2/WddzdzI2o9S3COdT73d5w6AIogbKq4X-
 SEPOLIA_PRIVATE_KEY=your_sepolia_private_key_here
-
-# BSC Testnet
-BSC_TESTNET_RPC=https://data-seed-prebsc-1-s1.binance.org:8545
-BSC_TESTNET_PRIVATE_KEY=your_bsc_testnet_private_key_here
 
 # Tezos Ghostnet
 TEZOS_GHOSTNET_RPC=https://ghostnet.tezos.marigold.dev
@@ -86,25 +75,17 @@ const setupInstructions = `# Testnet Setup Instructions
 - Get test ETH for gas fees
 - Get test USDC for swaps
 
-### BSC Testnet
-- Visit: ${testnetConfigs.bscTestnet.faucet}
-- Get test BNB for gas fees
-- Get test USDC for swaps
-
 ### Tezos Ghostnet
 - Visit: ${testnetConfigs.tezosGhostnet.faucet}
 - Get test XTZ for gas fees and swaps
 
 ## 2. Deploy Contracts
 
-### EVM Chains (Sepolia, BSC Testnet)
+### EVM Chains (Sepolia)
 The Limit Order Protocol contracts need to be deployed on testnets:
 \`\`\`bash
 # Deploy to Sepolia
-forge script script/DeployEscrowFactory.s.sol --rpc-url https://eth-sepolia.g.alchemy.com/v2/WddzdzI2o9S3COdT73d5w6AIogbKq4X- --broadcast --verify
-
-# Deploy to BSC Testnet
-forge script script/DeployEscrowFactory.s.sol --rpc-url https://data-seed-prebsc-1-s1.binance.org:8545 --broadcast --verify
+forge script contracts/src/DeployEscrowFactory.s.sol --rpc-url https://eth-sepolia.g.alchemy.com/v2/WddzdzI2o9S3COdT73d5w6AIogbKq4X- --broadcast --verify
 \`\`\`
 
 ### Tezos Ghostnet
@@ -136,7 +117,6 @@ npm run demo:testnet
 ## 5. Monitor Transactions
 
 - Sepolia: ${testnetConfigs.sepolia.explorer}
-- BSC Testnet: ${testnetConfigs.bscTestnet.explorer}
 - Tezos Ghostnet: ${testnetConfigs.tezosGhostnet.explorer}
 `;
 

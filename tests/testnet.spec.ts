@@ -4,15 +4,13 @@ import {TezosEscrowClient} from './tezosUtils'
 import {ethers} from 'ethers'
 import Sdk from '@1inch/cross-chain-sdk'
 
-describe('Cross-Chain Atomic Swap on Testnets', () => {
+describe('Cross-Chain Atomic Swap on Testnets (Sepolia ↔ Tezos)', () => {
     let sepoliaProvider: ethers.JsonRpcProvider
-    let bscTestnetProvider: ethers.JsonRpcProvider
     let tezosClient: TezosEscrowClient
 
     beforeAll(async () => {
         // Initialize providers for testnets
         sepoliaProvider = new ethers.JsonRpcProvider(testnetConfig.sepolia.url)
-        bscTestnetProvider = new ethers.JsonRpcProvider(testnetConfig.bscTestnet.url)
         
         // Initialize Tezos client
         tezosClient = new TezosEscrowClient({
@@ -23,7 +21,6 @@ describe('Cross-Chain Atomic Swap on Testnets', () => {
 
         console.log('🔗 Connected to testnets:')
         console.log(`   Sepolia: ${testnetConfig.sepolia.url}`)
-        console.log(`   BSC Testnet: ${testnetConfig.bscTestnet.url}`)
         console.log(`   Tezos Ghostnet: ${testnetConfig.tezosGhostnet.url}`)
     })
 
@@ -33,11 +30,7 @@ describe('Cross-Chain Atomic Swap on Testnets', () => {
         console.log(`✅ Sepolia connected - Block: ${blockNumber}`)
     })
 
-    it('should connect to BSC testnet', async () => {
-        const blockNumber = await bscTestnetProvider.getBlockNumber()
-        expect(blockNumber).toBeGreaterThan(0)
-        console.log(`✅ BSC Testnet connected - Block: ${blockNumber}`)
-    })
+
 
     it('should connect to Tezos Ghostnet', async () => {
         try {
@@ -59,7 +52,7 @@ describe('Cross-Chain Atomic Swap on Testnets', () => {
 
         // Create escrow parameters
         const escrowParams = {
-            srcAmount: '1000000', // 1 USDC (6 decimals)
+            srcAmount: '1000000000000000', // 0.001 ETH
             minDstAmount: '0',
             expirationDuration: 3600, // 1 hour
             secretHash: hashlock
@@ -69,9 +62,9 @@ describe('Cross-Chain Atomic Swap on Testnets', () => {
         
         // Note: This is a simulation since we need deployed contracts
         // In a real scenario, you would:
-        // 1. Deploy Limit Order Protocol contracts on testnets
+        // 1. Deploy EscrowFactory contract on Sepolia
         // 2. Deploy Tezos escrow contract on Ghostnet
-        // 3. Execute actual transactions
+        // 3. Execute actual atomic swap transactions
         
         expect(hashlock).toBeDefined()
         expect(secret).toBeDefined()
@@ -108,14 +101,10 @@ describe('Cross-Chain Atomic Swap on Testnets', () => {
         expect(testnetConfig.sepolia.url).toContain('sepolia')
         expect(testnetConfig.sepolia.chainId).toBe(Sdk.NetworkEnum.ETHEREUM)
         
-        // Verify BSC Testnet config
-        expect(testnetConfig.bscTestnet.url).toContain('prebsc')
-        expect(testnetConfig.bscTestnet.chainId).toBe(Sdk.NetworkEnum.BINANCE)
-        
         // Verify Tezos Ghostnet config
         expect(testnetConfig.tezosGhostnet.url).toContain('ghostnet')
         expect(testnetConfig.tezosGhostnet.chainId).toBe('TEZOS::1')
         
-        console.log('✅ Testnet configuration verified')
+        console.log('✅ Simplified testnet configuration verified (Sepolia ↔ Tezos only)')
     })
 }) 

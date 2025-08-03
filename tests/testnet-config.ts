@@ -9,10 +9,8 @@ const bool = z
 
 const TestnetConfigSchema = z.object({
     SEPOLIA_RPC: z.string().url().optional(),
-    BSC_TESTNET_RPC: z.string().url().optional(),
     TEZOS_GHOSTNET_RPC: z.string().url().optional(),
     SEPOLIA_PRIVATE_KEY: z.string().optional(),
-    BSC_TESTNET_PRIVATE_KEY: z.string().optional(),
     TEZOS_PRIVATE_KEY: z.string().optional(),
     TEZOS_CONTRACT_ADDRESS: z.string().optional()
 })
@@ -30,20 +28,6 @@ export const testnetConfig = {
         tokens: {
             USDC: {
                 address: '0x1c7d4b196cb0c7b01d743fbc6116a902379c7238', // Sepolia USDC
-                donor: '0x70997970C51812dc3A010C7d01b50e0d17dc79C8'
-            }
-        }
-    },
-    bscTestnet: {
-        chainId: Sdk.NetworkEnum.BINANCE, // Use mainnet enum but testnet URL
-        url: fromEnv.BSC_TESTNET_RPC || 'https://data-seed-prebsc-1-s1.binance.org:8545',
-        createFork: false,
-        limitOrderProtocol: '0x111111125421ca6dc452d289314280a0f8842a65', // BSC Testnet LOP address
-        wrappedNative: '0xae13d989dac2f0debff460ac112a837c89baa7cd', // BSC Testnet WBNB
-        ownerPrivateKey: fromEnv.BSC_TESTNET_PRIVATE_KEY || '0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80',
-        tokens: {
-            USDC: {
-                address: '0x64544969ed7ebf5f083679233325356ebe738930', // BSC Testnet USDC
                 donor: '0x70997970C51812dc3A010C7d01b50e0d17dc79C8'
             }
         }
@@ -66,4 +50,4 @@ export const testnetConfig = {
     }
 } as const
 
-export type TestnetChainConfig = (typeof testnetConfig)['sepolia' | 'bscTestnet' | 'tezosGhostnet'] 
+export type TestnetChainConfig = (typeof testnetConfig)['sepolia' | 'tezosGhostnet'] 

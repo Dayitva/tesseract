@@ -1,84 +1,150 @@
-const { TezosToolkit } = require('@taquito/taquito');
-const { InMemorySigner } = require('@taquito/signer');
-const fs = require('fs');
-const path = require('path');
+#!/usr/bin/env node
 
-// Configuration
-const config = {
-    rpcUrl: process.env.TEZOS_RPC_URL || 'https://ghostnet.tezos.marigold.dev',
-    privateKey: process.env.TEZOS_PRIVATE_KEY,
-    contractPath: path.join(__dirname, '../contracts/src/TezosEscrow.mligo')
-};
+/**
+ * Tezos Contract Deployment Script
+ * This script compiles and deploys the Tezos escrow contract to Ghostnet
+ */
 
-async function deployTezosContract() {
-    if (!config.privateKey) {
-        throw new Error('TEZOS_PRIVATE_KEY environment variable is required');
+const {execSync} = require('child_process')
+const fs = require('fs')
+const path = require('path')
+
+console.log('🌿 Tezos Contract Deployment Script')
+console.log('====================================\n')
+
+// Check if LIGO is installed
+function checkLigoInstallation() {
+    try {
+        execSync('ligo --version', {stdio: 'pipe'})
+        return true
+    } catch (error) {
+        return false
+    }
+}
+
+// Compile Tezos contract
+function compileTezosContract() {
+    const sourceFile = path.join(__dirname, '..', 'contracts', 'src', 'TezosEscrow.mligo')
+    const outputFile = path.join(__dirname, '..', 'contracts', 'src', 'TezosEscrow.tz')
+
+    if (!fs.existsSync(sourceFile)) {
+        console.log('❌ Tezos contract source file not found:', sourceFile)
+        return false
     }
 
-    console.log('🚀 Deploying Tezos Escrow Contract...');
-    console.log('RPC URL:', config.rpcUrl);
+    console.log('🔧 Compiling Tezos contract...')
+    console.log(`   Source: ${sourceFile}`)
+    console.log(`   Output: ${outputFile}\n`)
 
     try {
-        // Initialize Tezos toolkit
-        const tezos = new TezosToolkit(config.rpcUrl);
-        tezos.setProvider({
-            signer: new InMemorySigner(config.privateKey)
-        });
+        const command = `ligo compile contract ${sourceFile} --output-file ${outputFile}`
+        console.log(`Running: ${command}\n`)
 
-        // Get the account
-        const account = await tezos.signer.publicKeyHash();
-        console.log('Deploying from account:', account);
+        const output = execSync(command, {encoding: 'utf8'})
+        console.log('✅ Tezos contract compiled successfully!')
+        console.log(output)
 
-        // Read the contract source
-        const contractSource = fs.readFileSync(config.contractPath, 'utf8');
-        console.log('Contract source loaded');
-
-        // Note: In a real deployment, you would need to compile the Michelson contract
-        // This is a placeholder for the actual deployment process
-        console.log('⚠️  Note: This is a placeholder deployment script');
-        console.log('In a real deployment, you would:');
-        console.log('1. Compile the .mligo file to .tz format');
-        console.log('2. Deploy the compiled contract');
-        console.log('3. Initialize the contract storage');
-
-        // Example of what the deployment would look like:
-        /*
-        const operation = await tezos.contract.originate({
-            code: compiledContract,
-            storage: {
-                orders: new MichelsonMap(),
-                order_counter: 0,
-                owner: account
-            }
-        });
-
-        await operation.confirmation();
-        console.log('Contract deployed at:', operation.contractAddress);
-        */
-
-        console.log('✅ Deployment script completed (placeholder)');
-        console.log('To complete the deployment:');
-        console.log('1. Install ligo: https://ligolang.org/docs/intro/installation');
-        console.log('2. Compile: ligo compile contract contracts/src/TezosEscrow.mligo');
-        console.log('3. Deploy the compiled .tz file');
-
+        // Verify the compiled file exists
+        if (fs.existsSync(outputFile)) {
+            const stats = fs.statSync(outputFile)
+            console.log(`📄 Compiled contract size: ${stats.size} bytes`)
+            return true
+        } else {
+            console.log('❌ Compiled contract file not found')
+            return false
+        }
     } catch (error) {
-        console.error('❌ Deployment failed:', error);
-        throw error;
+        console.log('❌ Tezos contract compilation failed!')
+        console.log('Error:', error.message)
+
+        if (error.message.includes('command not found')) {
+            console.log('\n💡 Solution: Install LIGO first:')
+            console.log('   npm run install:ligo')
+            console.log('   or visit: https://ligolang.org/docs/intro/installation')
+        }
+
+        return false
     }
 }
 
-// Run deployment if called directly
-if (require.main === module) {
-    deployTezosContract()
-        .then(() => {
-            console.log('Deployment completed successfully');
-            process.exit(0);
-        })
-        .catch((error) => {
-            console.error('Deployment failed:', error);
-            process.exit(1);
-        });
+// Deploy to Tezos Ghostnet
+function deployToTezos() {
+    console.log('🚀 Deploying to Tezos Ghostnet...')
+    console.log('   RPC: https://ghostnet.tezos.marigold.dev')
+    console.log('   Network: Ghostnet (Testnet)\n')
+
+    const compiledFile = path.join(__dirname, '..', 'contracts', 'src', 'TezosEscrow.tz')
+
+    if (!fs.existsSync(compiledFile)) {
+        console.log('❌ Compiled Tezos contract not found. Please compile first.')
+        return false
+    }
+
+    console.log('📋 Deployment Information:')
+    console.log('   Contract: TezosEscrow')
+    console.log('   Network: Ghostnet')
+    console.log('   Explorer: https://ghostnet.tzkt.io/')
+    console.log('   Faucet: https://faucet.ghostnet.teztnets.xyz/\n')
+
+    console.log('⚠️  Manual Deployment Required')
+    console.log('=============================')
+    console.log('Due to the complexity of Tezos deployment, you need to:')
+    console.log('')
+    console.log('1. Get testnet XTZ from the faucet:')
+    console.log('   https://faucet.ghostnet.teztnets.xyz/')
+    console.log('')
+    console.log('2. Use a Tezos wallet (like Temple or Kukai) to deploy:')
+    console.log('   - Connect to Ghostnet')
+    console.log('   - Import the compiled contract: contracts/src/TezosEscrow.tz')
+    console.log('   - Deploy with initial storage')
+    console.log('')
+    console.log('3. Update your configuration with the deployed address:')
+    console.log('   - Add TEZOS_CONTRACT_ADDRESS to .env file')
+    console.log('   - Update tests/config.ts with the new address')
+    console.log('')
+    console.log('4. Test the deployment:')
+    console.log('   npm run test:testnet')
+    console.log('')
+
+    return true
 }
 
-module.exports = { deployTezosContract }; 
+// Main execution
+function main() {
+    console.log('🔍 Checking LIGO installation...')
+
+    if (!checkLigoInstallation()) {
+        console.log('❌ LIGO not found!')
+        console.log('\n💡 Installing LIGO...\n')
+
+        try {
+            execSync('npm run install:ligo', {stdio: 'inherit'})
+        } catch (error) {
+            console.log('❌ LIGO installation failed. Please install manually:')
+            console.log('   Visit: https://ligolang.org/docs/intro/installation')
+            process.exit(1)
+        }
+    } else {
+        console.log('✅ LIGO is installed!\n')
+    }
+
+    // Compile the contract
+    if (!compileTezosContract()) {
+        process.exit(1)
+    }
+
+    console.log('\n' + '='.repeat(50) + '\n')
+
+    // Deploy to Tezos
+    deployToTezos()
+
+    console.log('🎉 Tezos deployment setup complete!')
+    console.log('\nNext steps:')
+    console.log('1. Get testnet XTZ from faucet')
+    console.log('2. Deploy contract manually using a Tezos wallet')
+    console.log('3. Update configuration with deployed address')
+    console.log('4. Test the deployment')
+}
+
+// Run the script
+main()

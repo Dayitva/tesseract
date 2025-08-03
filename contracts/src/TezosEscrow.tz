@@ -1,0 +1,157 @@
+{ parameter
+    (or (pair %announce_order
+           (mutez %src_amount)
+           (nat %min_dst_amount)
+           (nat %expiration_duration)
+           (bytes %secret_hash))
+        (or (pair %claim_funds (nat %order_id) (bytes %secret))
+            (nat %cancel_swap))) ;
+  storage
+    (pair (big_map %orders
+             nat
+             (pair (nat %id)
+                   (address %maker_address)
+                   (mutez %amount)
+                   (bytes %secret_hash)
+                   (timestamp %expiration_timestamp)
+                   (bool %claimed)))
+          (nat %order_counter)
+          (address %owner)) ;
+  code { UNPAIR ;
+         IF_LEFT
+           { PUSH mutez 0 ;
+             DUP 2 ;
+             CAR ;
+             COMPARE ;
+             LE ;
+             IF { DROP 2 ; PUSH string "Invalid amount" ; FAILWITH }
+                { PUSH nat 0 ;
+                  DUP 2 ;
+                  GET 3 ;
+                  COMPARE ;
+                  LE ;
+                  IF { DROP 2 ; PUSH string "Invalid min amount" ; FAILWITH }
+                     { PUSH nat 0 ;
+                       DUP 2 ;
+                       GET 5 ;
+                       COMPARE ;
+                       LE ;
+                       IF { DROP 2 ; PUSH string "Invalid expiration" ; FAILWITH }
+                          { NOW ;
+                            DUP 2 ;
+                            GET 5 ;
+                            INT ;
+                            ADD ;
+                            DUP 3 ;
+                            GET 3 ;
+                            PUSH bool False ;
+                            DIG 2 ;
+                            DUP 4 ;
+                            GET 6 ;
+                            DIG 4 ;
+                            CAR ;
+                            SENDER ;
+                            DUP 6 ;
+                            PAIR 6 ;
+                            DUP 3 ;
+                            GET 4 ;
+                            PUSH nat 1 ;
+                            DUP 5 ;
+                            GET 3 ;
+                            ADD ;
+                            DIG 4 ;
+                            CAR ;
+                            DIG 3 ;
+                            SOME ;
+                            DIG 4 ;
+                            UPDATE ;
+                            PAIR 3 ;
+                            NIL operation ;
+                            PAIR } } } }
+           { IF_LEFT
+               { DUP 2 ;
+                 CAR ;
+                 DUP 2 ;
+                 CAR ;
+                 GET ;
+                 IF_NONE
+                   { DROP 2 ; PUSH string "Order not found" ; FAILWITH }
+                   { DUP ;
+                     GET 10 ;
+                     IF { DROP 3 ; PUSH string "Order already claimed" ; FAILWITH }
+                        { DUP ;
+                          GET 9 ;
+                          NOW ;
+                          COMPARE ;
+                          GT ;
+                          IF { DROP 3 ; PUSH string "Order expired" ; FAILWITH }
+                             { DUP ;
+                               GET 7 ;
+                               DUP 3 ;
+                               CDR ;
+                               SHA256 ;
+                               COMPARE ;
+                               NEQ ;
+                               IF { DROP 3 ; PUSH string "Invalid secret" ; FAILWITH }
+                                  { SENDER ;
+                                    CONTRACT unit ;
+                                    IF_NONE { PUSH string "Invalid receiver address" ; FAILWITH } {} ;
+                                    DUP 2 ;
+                                    GET 5 ;
+                                    UNIT ;
+                                    TRANSFER_TOKENS ;
+                                    DUP 4 ;
+                                    DIG 4 ;
+                                    CAR ;
+                                    DIG 3 ;
+                                    PUSH bool True ;
+                                    UPDATE 10 ;
+                                    SOME ;
+                                    DIG 4 ;
+                                    CAR ;
+                                    UPDATE ;
+                                    UPDATE 1 ;
+                                    NIL operation ;
+                                    DIG 2 ;
+                                    CONS ;
+                                    PAIR } } } } }
+               { DUP 2 ;
+                 CAR ;
+                 DUP 2 ;
+                 GET ;
+                 IF_NONE
+                   { DROP 2 ; PUSH string "Order not found" ; FAILWITH }
+                   { DUP ;
+                     GET 3 ;
+                     SENDER ;
+                     COMPARE ;
+                     NEQ ;
+                     IF { DROP 3 ; PUSH string "Only maker can cancel" ; FAILWITH }
+                        { DUP ;
+                          GET 10 ;
+                          IF { DROP 3 ; PUSH string "Order already claimed" ; FAILWITH }
+                             { DUP ;
+                               GET 9 ;
+                               NOW ;
+                               COMPARE ;
+                               LT ;
+                               IF { DROP 3 ; PUSH string "Order not expired yet" ; FAILWITH }
+                                  { DUP ;
+                                    GET 3 ;
+                                    CONTRACT unit ;
+                                    IF_NONE { PUSH string "Invalid maker address" ; FAILWITH } {} ;
+                                    SWAP ;
+                                    GET 5 ;
+                                    UNIT ;
+                                    TRANSFER_TOKENS ;
+                                    DUP 3 ;
+                                    DIG 3 ;
+                                    CAR ;
+                                    NONE (pair nat address mutez bytes timestamp bool) ;
+                                    DIG 4 ;
+                                    UPDATE ;
+                                    UPDATE 1 ;
+                                    NIL operation ;
+                                    DIG 2 ;
+                                    CONS ;
+                                    PAIR } } } } } } } }

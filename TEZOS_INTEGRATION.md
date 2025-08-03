@@ -292,4 +292,4 @@ To contribute to the Tezos integration:
 - [Tezos Documentation](https://tezos.gitlab.io/)
 - [LIGO Language](https://ligolang.org/)
 - [Taquito SDK](https://tezostaquito.io/)
-- [1inch Fusion+ Documentation](https://docs.1inch.io/) 
+- [1inch Fusion+ Documentation](https://docs.1inch.io/)
